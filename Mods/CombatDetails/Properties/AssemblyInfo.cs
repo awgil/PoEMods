@@ -1,15 +1,18 @@
 ﻿using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using Patchwork.Attributes;
+
+[assembly: PatchAssembly]
 
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("PoEGameInfo")]
+[assembly: AssemblyTitle("CombatDetails")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("PoEGameInfo")]
+[assembly: AssemblyProduct("CombatDetails")]
 [assembly: AssemblyCopyright("Copyright ©  2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +23,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("cbb8c56c-29d2-40b8-a88b-d1a64677a9d9")]
+[assembly: Guid("96ee2111-71b5-41e3-80b0-d05f789dac47")]
 
 // Version information for an assembly consists of the following four values:
 //
