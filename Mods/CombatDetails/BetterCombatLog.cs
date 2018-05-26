@@ -364,7 +364,7 @@ namespace CombatDetails
             if (damage.Attack != null)
                 extraAccPerLevel &= damage.Attack.AbilityOrigin || damage.Attack.TriggeringAbility;
             else
-                extraAccPerLevel &= attackerStats.CharacterClass != CharacterStats.Class.Chanter;
+                extraAccPerLevel &= attackerStats.CharacterClass == CharacterStats.Class.Chanter;
             if (extraAccPerLevel)
                 calc.Add(attackerStats.ScaledLevel, "Level extra"); // spells & abilities have extra +1 acc/level bonus
 
@@ -409,7 +409,7 @@ namespace CombatDetails
                     break;
             }
 
-            if (damage.Attack.IsDisengagementAttack)
+            if (damage.Attack && damage.Attack.IsDisengagementAttack)
             {
                 calc.AddFromStat(attackerStats, StatusEffect.ModifiedStat.DisengagementAccuracy, attackerStats.DisengagementAccuracyBonus, "disengagement");
                 calc.Add(attackerStats.DifficultyDisengagementAccuracyBonus, "Disengagement difficulty");
@@ -432,7 +432,7 @@ namespace CombatDetails
                     Shield equippedShield = equipment.EquippedShield;
                     if (equippedShield != null)
                         calc.Add(equippedShield.AccuracyBonus, "Shield");
-                    else if (!damage.Attack.AbilityOrigin && !equipment.TwoHandedWeapon && !equipment.DualWielding)
+                    else if (!damage.Attack?.AbilityOrigin && !equipment.TwoHandedWeapon && !equipment.DualWielding)
                         calc.Add(AttackData.Instance.Single1HWeapNoShieldAccuracyBonus, "One-handed");
                 }
                 else
@@ -440,7 +440,7 @@ namespace CombatDetails
                     Shield shield = equipment.DefaultEquippedItems.Shield;
                     if (shield != null)
                         calc.Add(shield.AccuracyBonus, "Shield");
-                    else if (!damage.Attack.AbilityOrigin && !equipment.DefaultEquippedItems.TwoHandedWeapon && !equipment.DefaultEquippedItems.DualWielding)
+                    else if (!damage.Attack?.AbilityOrigin && !equipment.DefaultEquippedItems.TwoHandedWeapon && !equipment.DefaultEquippedItems.DualWielding)
                         calc.Add(AttackData.Instance.Single1HWeapNoShieldAccuracyBonus, "One-handed");
                 }
             }
@@ -513,26 +513,29 @@ namespace CombatDetails
             }
 
             // defenderStats.GetDefenseBonus vs attack
-            if (damage.Attack.HasStatusEffect(StatusEffect.ModifiedStat.Stunned) || damage.Attack.HasStatusEffect(StatusEffect.ModifiedStat.CanStun))
-                calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.StunDefense, defenderStats.StunDefenseBonus, "vs stun");
-            if (damage.Attack.HasStatusEffect(StatusEffect.ModifiedStat.KnockedDown))
-                calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.KnockdownDefense, defenderStats.KnockdownDefenseBonus, "vs knockdown");
-            if (damage.Attack.HasKeyword("poison")) // OR isSecondary && attack.HasAfflictionWithKeyword("poison")
-                calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.PoisonDefense, defenderStats.PoisonDefenseBonus, "vs poison");
-            if (damage.Attack.HasKeyword("disease")) // OR similar to above
-                calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.DiseaseDefense, defenderStats.DiseaseDefenseBonus, "vs disease");
-            if (damage.Attack.PushDistance != 0f || damage.Attack.HasStatusEffect(StatusEffect.ModifiedStat.Push))
-                calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.PushDefense, defenderStats.PushDefenseBonus, "vs push");
-            if (damage.Attack.IsDisengagementAttack)
-                calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.DisengagementDefense, defenderStats.DisengagementDefenseBonus, "vs disengagement");
-            if (damage.Attack.AbilityOrigin != null && damage.Attack.AbilityOrigin is GenericSpell)
-                calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.SpellDefense, defenderStats.SpellDefenseBonus, "vs spells");
-            if (damage.Attack is AttackRanged && damage.DefendedBy == CharacterStats.DefenseType.Deflect)
-                calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.RangedDeflection, defenderStats.RangedDeflectionBonus, "vs ranged deflect");
-            if (defenderStats.GetComponent<Equipment>()?.TwoHandedWeapon == true)
-                calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.TwoHandedDeflectionBonus, defenderStats.TwoHandedDeflectionBonus, "two-handed deflect"); // ! vs all attacks
-            if (damage.Attack is AttackAOE)
-                calc.Add(defenderStats.DefensiveBondBonus, "Defensive Bond vs AOE");
+            if (damage.Attack)
+            {
+                if (damage.Attack.HasStatusEffect(StatusEffect.ModifiedStat.Stunned) || damage.Attack.HasStatusEffect(StatusEffect.ModifiedStat.CanStun))
+                    calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.StunDefense, defenderStats.StunDefenseBonus, "vs stun");
+                if (damage.Attack.HasStatusEffect(StatusEffect.ModifiedStat.KnockedDown))
+                    calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.KnockdownDefense, defenderStats.KnockdownDefenseBonus, "vs knockdown");
+                if (damage.Attack.HasKeyword("poison")) // OR isSecondary && attack.HasAfflictionWithKeyword("poison")
+                    calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.PoisonDefense, defenderStats.PoisonDefenseBonus, "vs poison");
+                if (damage.Attack.HasKeyword("disease")) // OR similar to above
+                    calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.DiseaseDefense, defenderStats.DiseaseDefenseBonus, "vs disease");
+                if (damage.Attack.PushDistance != 0f || damage.Attack.HasStatusEffect(StatusEffect.ModifiedStat.Push))
+                    calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.PushDefense, defenderStats.PushDefenseBonus, "vs push");
+                if (damage.Attack.IsDisengagementAttack)
+                    calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.DisengagementDefense, defenderStats.DisengagementDefenseBonus, "vs disengagement");
+                if (damage.Attack.AbilityOrigin != null && damage.Attack.AbilityOrigin is GenericSpell)
+                    calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.SpellDefense, defenderStats.SpellDefenseBonus, "vs spells");
+                if (damage.Attack is AttackRanged && damage.DefendedBy == CharacterStats.DefenseType.Deflect)
+                    calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.RangedDeflection, defenderStats.RangedDeflectionBonus, "vs ranged deflect");
+                if (defenderStats.GetComponent<Equipment>()?.TwoHandedWeapon == true)
+                    calc.AddFromStat(defenderStats, StatusEffect.ModifiedStat.TwoHandedDeflectionBonus, defenderStats.TwoHandedDeflectionBonus, "two-handed deflect"); // ! vs all attacks
+                if (damage.Attack is AttackAOE)
+                    calc.Add(defenderStats.DefensiveBondBonus, "Defensive Bond vs AOE");
+            }
 
             var defenderAI = defenderStats.gameObject.GetComponent<AnimationController>();
             if (defenderAI != null)
@@ -1255,7 +1258,7 @@ namespace CombatDetails
             }
             catch (Exception e)
             {
-                Console.AddMessage($"BetterCombatLog: exception {e.Message}");
+                Console.AddMessage($"BetterCombatLog: exception {e.Message}", e.StackTrace);
             }
         }
     }
