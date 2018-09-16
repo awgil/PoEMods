@@ -145,9 +145,9 @@ namespace CombatDetails
                 m_str.Append(val < 0 ? " - " : " + ");
                 m_str.Append(Math.Abs(val));
             }
-            m_str.Append(" (");
+            m_str.Append(" [808080](");
             m_str.Append(reason);
-            m_str.Append(")");
+            m_str.Append(")[-]");
         }
 
         [NewMember]
@@ -199,7 +199,7 @@ namespace CombatDetails
                 return "";
 
             string report = string.IsNullOrEmpty(statName) ? "" : statName + ": ";
-            report += $"{m_curTotal} = {m_str.ToString()}\n";
+            report += $"{m_curTotal}[A0A0A0] = {m_str.ToString()}[-]\n";
             return report;
         }
     }
@@ -571,11 +571,11 @@ namespace CombatDetails
             bool isOneHanded = equipment != null && damage.Attack == equipment.PrimaryAttack && !equipment.TwoHandedWeapon && !equipment.DualWielding && equipment.PrimaryAttack is AttackMelee && equipment.EquippedShield == null;
 
             StringBuilder str = new StringBuilder();
-            str.Append($"Roll: {damage.RawRoll} + {damage.AccuracyRating} - {damage.DefenseRating} = {hitValue} => {damage.OriginalHitType}");
+            str.Append($"Roll: [A0A0A0]{damage.RawRoll} + {damage.AccuracyRating} - {damage.DefenseRating} =[-] {hitValue} => {damage.OriginalHitType}");
             switch (damage.OriginalHitType)
             {
                 case HitType.MISS:
-                    str.Append($" (<{attackerStats.MinimumRollToGraze})\n");
+                    str.Append($" [A0A0A0](<{attackerStats.MinimumRollToGraze})[-]\n");
                     if (isPhysicalAttack)
                     {
                         var calc = new BonusCalculator();
@@ -584,7 +584,7 @@ namespace CombatDetails
                     }
                     break;
                 case HitType.GRAZE:
-                    str.Append($" ({attackerStats.MinimumRollToGraze}-{CharacterStats.GrazeThreshhold})\n");
+                    str.Append($" [A0A0A0]({attackerStats.MinimumRollToGraze}-{CharacterStats.GrazeThreshhold})[-]\n");
                     if (isPhysicalAttack)
                     {
                         var calcGH = new BonusCalculator();
@@ -599,7 +599,7 @@ namespace CombatDetails
                     }
                     break;
                 case HitType.HIT:
-                    str.Append($" ({CharacterStats.GrazeThreshhold + 1}-{attackerStats.CritThreshhold - 1})\n");
+                    str.Append($" [A0A0A0]({CharacterStats.GrazeThreshhold + 1}-{attackerStats.CritThreshhold - 1})[-]\n");
                     if (isPhysicalAttack)
                     {
                         var calcHC = new BonusCalculator();
@@ -623,7 +623,7 @@ namespace CombatDetails
                     }
                     break;
                 case HitType.CRIT:
-                    str.Append($" ({attackerStats.CritThreshhold}+)\n");
+                    str.Append($" [A0A0A0]({attackerStats.CritThreshhold}+)[-]\n");
                     if (isPhysicalAttack)
                     {
                         var calcCH = new BonusCalculator();
@@ -729,7 +729,7 @@ namespace CombatDetails
             }
 
             expectedMin += pctRangeReduction / 100f * (expectedMax - expectedMin);
-            str.Append($"\nDamage roll: [{expectedMin}-{expectedMax}] = {damage.DamageBase}\n");
+            str.Append($"\nDamage roll: [A0A0A0][{expectedMin}-{expectedMax}] =[-] {damage.DamageBase}\n");
             // TODO: adjustment for traps - see AttackBase::OnImpact
             return str.ToString();
         }
@@ -905,17 +905,17 @@ namespace CombatDetails
             report += $"{dmgType} final dmg";
             if (multiplier != 1f)
                 report += $" (x{multiplier} DR)";
-            report += $": ({amount} - {remainingDT})";
+            report += $": [A0A0A0]({amount} - {remainingDT})";
             if (dr != 0f)
                 report += $" * (1 - {dr})";
-            report += $" = {postDT}";
+            report += $" =[-] {postDT}";
             if (postDT < minDmg)
             {
                 postDT = minDmg;
-                report += $" (clamped to min {minDmg} = {minDmgPct}%";
+                report += $" [A0A0A0](clamped to min {minDmg} = {minDmgPct}%";
                 if (defenderStats.DamageMinBonus != 0f)
                     report += $" + {defenderStats.DamageMinBonus}";
-                report += ")";
+                report += ")[-]";
             }
 
             adjusted = Mathf.Max(0f, postDT);
@@ -1189,12 +1189,12 @@ namespace CombatDetails
             var damagePreDRDT = damage.DamageBase * calcMul.CurTotal() + calcAdd.CurTotal() * mightMod + finishingAdd;
             if (damagePreDRDT != 0f)
             {
-                report += $"Damage before DR = {damage.DamageBase} * {calcMul.CurTotal()}";
+                report += $"Damage before DR = [A0A0A0]{damage.DamageBase} * {calcMul.CurTotal()}";
                 if (calcAdd.CurTotal() != 0f)
                     report += $" + {calcAdd.CurTotal()} * {mightMod}";
                 if (finishingAdd != 0f)
                     report += $" + {finishingAdd} finishing";
-                report += $" = {damagePreDRDT}\n";
+                report += $" =[-] {damagePreDRDT}\n";
 
                 if (strProcs.Length > 0)
                 {
@@ -1428,6 +1428,40 @@ namespace CombatDetails
             {
                 this.OnPostDamageDealt(base.gameObject, new CombatEventArgs(damage, base.gameObject, enemy));
             }
+        }
+    }
+
+    // allow colorizing combat log tooltips
+    [ModifiesType]
+    public class mod_UIConsoleEntry : UIConsoleEntry
+    {
+        [ModifiesMember]
+        private new void OnColliderTooltip(GameObject sender, bool over)
+        {
+            if (string.IsNullOrEmpty(this.m_Message.m_verbosemessage))
+            {
+                this.m_GlossaryEnabledLabel.OnColliderTooltip(sender, over);
+            }
+            else if (!over)
+            {
+                UICombatLogTooltip.GlobalHide();
+            }
+            else
+            {
+                // do not strip symbols and pass verbose string as-is
+                UICombatLogTooltip.GlobalShow(this.Label, this.m_Message.m_verbosemessage);
+            }
+        }
+    }
+
+    [ModifiesType]
+    public class mod_UICombatLogTooltip : UICombatLogTooltip
+    {
+        [ModifiesMember]
+        public override void SetText(string text)
+        {
+            this.Label.supportEncoding = true;
+            this.Label.text = text;
         }
     }
 }

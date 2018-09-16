@@ -1,4 +1,5 @@
 ﻿using Patchwork.Attributes;
+using UnityEngine;
 
 namespace TooltipFlickerFix
 {
@@ -96,5 +97,183 @@ namespace TooltipFlickerFix
         //        }
         //    }
         //}
+    }
+
+    // another source of flickering is the anchor; sometimes it shifts coordinates of UI elements by 1 back and forth
+    // exact reason is unknown; but to fix it, I revert local transform changes due to anchoring if they are <= 1 - this seems to work ok
+    [ModifiesType]
+    public class mod_UIAnchor : UIAnchor
+    {
+        // reference implementation
+        //[ModifiesMember]
+        //public new Vector3 GetPosition()
+        //{
+        //    if (!this.mTrans)
+        //        this.mTrans = base.transform;
+
+        //    bool anchorToCamera = false;
+        //    if (this.panelContainer != null)
+        //    {
+        //        if (this.panelContainer.clipping != UIDrawCall.Clipping.None)
+        //        {
+        //            Vector4 panelClipRange = this.panelContainer.clipRange;
+        //            this.mRect.x = panelClipRange.x - panelClipRange.z * 0.5f;
+        //            this.mRect.y = panelClipRange.y - panelClipRange.w * 0.5f;
+        //            this.mRect.width = panelClipRange.z;
+        //            this.mRect.height = panelClipRange.w;
+        //        }
+        //        else
+        //        {
+        //            float single = (this.mRoot == null ? 0.5f : (float)this.mRoot.activeHeight / (float)Screen.height * 0.5f);
+        //            this.mRect.xMin = (float)(-Screen.width) * single;
+        //            this.mRect.yMin = (float)(-Screen.height) * single;
+        //            this.mRect.xMax = -this.mRect.xMin;
+        //            this.mRect.yMax = -this.mRect.yMin;
+        //        }
+        //    }
+        //    else if (this.widgetContainer != null)
+        //    {
+        //        Transform transforms = this.widgetContainer.cachedTransform;
+        //        Vector3 widgetLocalScale = transforms.localScale;
+        //        Vector3 widgetLocalPos = transforms.localPosition;
+        //        Vector3 widgetRelSize = this.widgetContainer.relativeSize;
+        //        Vector3 widgetPivotOffset = this.widgetContainer.pivotOffset;
+        //        widgetPivotOffset.y -= 1f;
+        //        widgetPivotOffset.x = widgetPivotOffset.x * (widgetRelSize.x * widgetLocalScale.x);
+        //        widgetPivotOffset.y = widgetPivotOffset.y * (widgetRelSize.y * widgetLocalScale.y);
+        //        this.mRect.x = widgetLocalPos.x + widgetPivotOffset.x;
+        //        this.mRect.y = widgetLocalPos.y + widgetPivotOffset.y;
+        //        this.mRect.width = widgetRelSize.x * widgetLocalScale.x;
+        //        this.mRect.height = widgetRelSize.y * widgetLocalScale.y;
+        //    }
+        //    else if (this.uiCamera != null)
+        //    {
+        //        anchorToCamera = true;
+        //        this.mRect = this.uiCamera.pixelRect;
+        //    }
+        //    else
+        //    {
+        //        return Vector3.zero;
+        //    }
+
+        //    float xMid = (this.mRect.xMin + this.mRect.xMax) * 0.5f;
+        //    float yMid = (this.mRect.yMin + this.mRect.yMax) * 0.5f;
+        //    Vector3 result = new Vector3(xMid, yMid, 0f);
+        //    if (this.side != UIAnchor.Side.Center)
+        //    {
+        //        if (this.side == UIAnchor.Side.Right || this.side == UIAnchor.Side.TopRight || this.side == UIAnchor.Side.BottomRight)
+        //        {
+        //            result.x = this.mRect.xMax;
+        //        }
+        //        else if (this.side == UIAnchor.Side.Top || this.side == UIAnchor.Side.Center || this.side == UIAnchor.Side.Bottom)
+        //        {
+        //            result.x = xMid;
+        //        }
+        //        else
+        //        {
+        //            result.x = this.mRect.xMin;
+        //        }
+        //        if (this.side == UIAnchor.Side.Top || this.side == UIAnchor.Side.TopRight || this.side == UIAnchor.Side.TopLeft)
+        //        {
+        //            result.y = this.mRect.yMax;
+        //        }
+        //        else if (this.side == UIAnchor.Side.Left || this.side == UIAnchor.Side.Center || this.side == UIAnchor.Side.Right)
+        //        {
+        //            result.y = yMid;
+        //        }
+        //        else
+        //        {
+        //            result.y = this.mRect.yMin;
+        //        }
+        //    }
+        //    result.x = result.x + this.relativeOffset.x * this.mRect.width;
+        //    result.y = result.y + this.relativeOffset.y * this.mRect.height;
+        //    if (!anchorToCamera)
+        //    {
+        //        result.x = Mathf.Round(result.x);
+        //        result.y = Mathf.Round(result.y);
+        //        result.x += this.pixelOffset.x;
+        //        result.y += this.pixelOffset.y;
+        //        if (this.panelContainer != null)
+        //        {
+        //            result = this.panelContainer.cachedTransform.TransformPoint(result);
+        //        }
+        //        else if (this.widgetContainer != null)
+        //        {
+        //            Transform transforms1 = this.widgetContainer.cachedTransform.parent;
+        //            if (transforms1 != null)
+        //            {
+        //                result = transforms1.TransformPoint(result);
+        //            }
+        //        }
+        //    }
+        //    else
+        //    {
+        //        if (this.uiCamera.orthographic)
+        //        {
+        //            result.x = Mathf.Round(result.x);
+        //            result.y = Mathf.Round(result.y);
+        //            result.x += this.pixelOffset.x;
+        //            result.y += this.pixelOffset.y;
+        //        }
+        //        Vector3 screenPoint = this.uiCamera.WorldToScreenPoint(this.mTrans.position);
+        //        result.z = screenPoint.z;
+        //        result = this.uiCamera.ScreenToWorldPoint(result);
+        //    }
+        //    if (this.DisableX)
+        //    {
+        //        result.x = this.mTrans.position.x;
+        //    }
+        //    if (this.DisableY)
+        //    {
+        //        result.y = this.mTrans.position.y;
+        //    }
+        //    return result;
+        //}
+
+        [ModifiesMember]
+        public new void Update()
+        {
+            if (this.mAnim != null && this.mAnim.enabled && this.mAnim.isPlaying)
+            {
+                return;
+            }
+
+            Vector3 position = this.GetPosition();
+            Vector3 oldLocalPos = this.mTrans.localPosition;
+
+            if (this.mTrans.position != position)
+            {
+                this.mTrans.position = position;
+            }
+
+            Vector3 newLocalPos = this.mTrans.localPosition;
+            newLocalPos.z = oldLocalPos.z;
+            if (this.RoundToWhole)
+            {
+                newLocalPos.x = Mathf.Floor(this.mTrans.localPosition.x);
+                newLocalPos.y = Mathf.Floor(this.mTrans.localPosition.y);
+            }
+
+            // this is my hack ...
+            float dx = Mathf.Abs(oldLocalPos.x - newLocalPos.x);
+            float dy = Mathf.Abs(oldLocalPos.y - newLocalPos.y);
+            if (dx <= 1 && dy <= 1)
+            {
+                newLocalPos.x = oldLocalPos.x;
+                newLocalPos.y = oldLocalPos.y;
+            }
+            // ... and here it ends
+
+            if (newLocalPos != this.mTrans.localPosition)
+            {
+                this.mTrans.localPosition = newLocalPos;
+            }
+
+            if (this.runOnlyOnce && Application.isPlaying)
+            {
+                Object.Destroy(this);
+            }
+        }
     }
 }
